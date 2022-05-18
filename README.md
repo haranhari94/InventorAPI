@@ -1,5 +1,5 @@
 # InventorAPI
-From this Repository you can get the sample code's for your Inventor reference Prroblem.
+From this Repository you can get the sample C# code's for Inventor API
 When ever i have time i will uplod the sampple code from my project.
 this is free of cost you can git it and use it any where in your project.
 
