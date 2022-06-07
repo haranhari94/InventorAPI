@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -50,19 +50,57 @@ namespace LocalNetworkLogger
 
             AssemblyDocument oAssyDoc = oDrawView.ReferencedDocumentDescriptor.ReferencedDocument;
             AssemblyComponentDefinition assyCompDef = oAssyDoc.ComponentDefinition;
-            WorkPlanes oWorkPlanes = assyCompDef.WorkPlanes;
-            WorkPlane oWrkPlane = null;
-            foreach(WorkPlane oWorkPlane in oWorkPlanes)
+            foreach (WorkPlane oWorkPlane in assyCompDef.WorkPlanes)
             {
-                if(oWorkPlane.Name == "YZ Plane")
+                if (IncludePlaneObject(oWorkPlane, oDrawView))
                 {
-                   oWorkPlane.AutoResize = true;
-                    oWrkPlane = oWorkPlane;
-                    break;
+                    GetDrawingLinePosition(oWorkPlane, oSheet, oDrawView);
+                                        
                 }
             }
-            oDrawView.SetIncludeStatus(oWrkPlane,true);
-           
+        }
+
+        public void GetDrawingLinePosition(WorkPlane oWorkPlane, Sheet oSheet, DrawingView oDrawView)
+        {
+            double viewHeight = Math.Round(oDrawView.Height,0);
+            double viewWidth = Math.Round(oDrawView.Width,0);
+            double viewTop =  Math.Round(oDrawView.Top, 0);
+            double viewBottom = Math.Round(viewTop - viewHeight,0);
+            double viewLeft =  Math.Round(oDrawView.Left, 0);
+            Point2d drawPosition = oDrawView.Position;
+            foreach(Centerline centerline in oSheet.Centerlines)
+            {
+                if(centerline.CenterlineType == CenterlineTypeEnum.kWorkFeatureCenterlineType)
+                {
+                    if(centerline.ModelWorkFeature.Name == oWorkPlane.Name)
+                    {
+                        if(Math.Round(centerline.StartPoint.X,0) >= viewLeft && Math.Round(centerline.StartPoint.X, 0) <= viewLeft+viewWidth && Math.Round(centerline.StartPoint.Y, 0) <= viewTop && Math.Round(centerline.StartPoint.Y, 0) >= viewBottom)
+                        {
+                            oDrawView.SetVisibility(oWorkPlane, true);                            
+                        }
+                        else
+                        {
+                            oDrawView.SetVisibility(oWorkPlane, false);
+                        }
+                    }
+                }
+            }
+
+        }
+
+
+        public static bool IncludePlaneObject(WorkPlane wPlane, DrawingView drawingView)
+        { 
+            try
+            {
+                drawingView.SetIncludeStatus(wPlane, true);
+
+                return true;
+            }
+            catch(Exception ex)
+            {
+                return false;
+            }
         }
     }
 }
