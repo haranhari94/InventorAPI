@@ -50,17 +50,32 @@ namespace LocalNetworkLogger
 
             AssemblyDocument oAssyDoc = oDrawView.ReferencedDocumentDescriptor.ReferencedDocument;
             AssemblyComponentDefinition assyCompDef = oAssyDoc.ComponentDefinition;
-            foreach (WorkPlane oWorkPlane in assyCompDef.WorkPlanes)
+            ComponentOccurrences Occs = assyCompDef.Occurrences;
+            ComponentOccurrencesEnumerator leaf = Occs.AllLeafOccurrences;
+
+            foreach (ComponentOccurrence Occ in leaf)
             {
-                if (IncludePlaneObject(oWorkPlane, oDrawView))
+                dynamic occCompDef = null;
+                if (Occ.DefinitionDocumentType == DocumentTypeEnum.kPartDocumentObject)
+                    occCompDef = (PartComponentDefinition)Occ.Definition;
+                else if (Occ.DefinitionDocumentType == DocumentTypeEnum.kAssemblyDocumentObject)
+                    occCompDef = (AssemblyComponentDefinition)Occ.Definition;
+
+
+                foreach (WorkPlane occPlane in occCompDef.WorkPlanes)
                 {
-                    GetDrawingLinePosition(oWorkPlane, oSheet, oDrawView);
-                                        
+                    object proxyPlaneObj = null;
+                    Occ.CreateGeometryProxy(occPlane, out proxyPlaneObj);
+                    WorkPlaneProxy workPlaneProxy = (WorkPlaneProxy)proxyPlaneObj;
+                    if(IncludePlaneObject(workPlaneProxy,oDrawView))
+                    {
+                        GetDrawingLinePosition(workPlaneProxy, oSheet, oDrawView);
+                    }
                 }
             }
         }
 
-        public void GetDrawingLinePosition(WorkPlane oWorkPlane, Sheet oSheet, DrawingView oDrawView)
+        public void GetDrawingLinePosition(dynamic oWorkPlane, Sheet oSheet, DrawingView oDrawView)
         {
             double viewHeight = Math.Round(oDrawView.Height,0);
             double viewWidth = Math.Round(oDrawView.Width,0);
@@ -80,7 +95,7 @@ namespace LocalNetworkLogger
                         }
                         else
                         {
-                            oDrawView.SetVisibility(oWorkPlane, false);
+                            oDrawView.SetIncludeStatus(oWorkPlane, false);
                         }
                     }
                 }
@@ -89,7 +104,7 @@ namespace LocalNetworkLogger
         }
 
 
-        public static bool IncludePlaneObject(WorkPlane wPlane, DrawingView drawingView)
+        public static bool IncludePlaneObject(dynamic wPlane, DrawingView drawingView)
         { 
             try
             {
